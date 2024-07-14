@@ -1,0 +1,97 @@
+ # Import necessary libraries
+import pyodbc
+import sqlalchemy
+import pandas as pd
+from sqlalchemy import create_engine
+from sqlalchemy.engine.url import URL
+import logging
+from datetime import datetime
+
+
+DATABASE_CONNECTION_STRING = (
+    "Driver={ODBC Driver 17 for SQL Server};"
+    "Server=SKYEVIEW\\SQLEXPRESS01;"
+    "Database=AdventureWorks2022;"
+    "Trusted_Connection=yes;"
+)
+
+# Set up logging
+log_filename = f"log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+logging.basicConfig(filename=log_filename, level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+# Also set up logging to print to console
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+logging.getLogger().addHandler(console_handler)
+
+# Log the start of the script
+logging.info("Script started.")
+
+
+# Define functions for extracting SQL query
+
+def retrieve_data(query):
+    """
+    Retrieve data from specified server and database using SQL query.
+
+    Parameters:
+        query (str): SQL query to retrieve data.
+
+    Returns:
+        DataFrame: Pandas DataFrame containing retrieved data.
+    """
+    try:
+        # Connect to database
+        logging.info("Attempting to connect to the database for retrieving data.")
+
+        engine = create_engine(f"mssql+pyodbc:///?odbc_connect={DATABASE_CONNECTION_STRING}")
+
+        logging.info(f"Retrieving data with query: {query}")
+        
+        # Read data using SQL query
+        df = pd.read_sql(query, engine)
+
+        logging.info("Data retrieved successfully.")
+        
+    except Exception as e:
+        logging.error(f"Error retrieving data: {e}")
+
+        print(f"Error retrieving data: {e}")
+
+        df = pd.DataFrame()  # Return empty DataFrame in case of error
+   
+    return df
+
+
+####################################################################################################################
+
+### EXTRACTING DATA
+
+####################################################################################################################
+# Data Retrieval from SQL Server Database
+retrieval_query = """
+SELECT *
+FROM Sales.SalesOrderDetail
+WHERE ModifiedDate >= DATEADD(YEAR, -2, (SELECT MAX(ModifiedDate) FROM Sales.SalesOrderDetail))
+"""
+
+try:
+    # Retrieve Data from Database
+    data_frame = retrieve_data(retrieval_query)
+    logging.info("Data retrieved successfully.")
+    print("Data retrieved successfully.")
+    
+    #Display the first few rows
+    print(data_frame.head())
+
+     # Export DataFrame to CSV
+    data_frame.to_csv('SalesOrderDetail.csv', index=False)
+    logging.info("Data exported to CSV successfully.")
+    print("Data exported to CSV successfully.")
+    
+except Exception as e:
+    logging.error(f"Error retrieving or exporting data: {e}")
+    print(f"Error retrieving or exporting data: {e}")

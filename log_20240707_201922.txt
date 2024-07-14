@@ -1,0 +1,10 @@
+2024-07-07 20:19:22,264 - INFO - Script started.
+2024-07-07 20:19:22,264 - INFO - Attempting to connect to the database for retrieving data.
+2024-07-07 20:19:22,291 - INFO - Retrieving data with query: 
+SELECT *
+FROM Sales.SalesOrderDetail
+WHERE ModifiedDate >= DATEADD(YEAR, -2, (SELECT MAX(ModifiedDate) FROM Sales.SalesOrderDetail))
+
+2024-07-07 20:19:24,690 - INFO - Data retrieved successfully.
+2024-07-07 20:19:24,693 - INFO - Data retrieved successfully.
+2024-07-07 20:19:25,200 - INFO - Data exported to CSV successfully.
